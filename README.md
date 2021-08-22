@@ -5,15 +5,15 @@
 The general goal of this project is to better understand malicious network activity through system log analysis. To that end, this suite of PowerShell functions can be used to provision and configure a virtualized environment that supports the following activities:
 * simulation of hostile network behaviors using Atomic Red Team
 * collection of Sysmon and Syslog event logs to observe network activity
-* (in progress) threat detection and analysis using Azure Sentinel.
+* threat detection and analysis using Azure Sentinel.
 
-An accompanying writeup will be provided after I have finalized my approach.
+An accompanying writeup for this work can be found [here](https://www.remotelycurious.net/post/threatlab/).
 
 # Requirements
 
 * Azure Subscription
 * Azure Key Vault
-* PowerShell with Az Module
+* PowerShell with [*Az*](https://docs.microsoft.com/en-us/powershell/azure) and [*Az.SecurityInsights*](https://docs.microsoft.com/en-us/powershell/module/az.securityinsights) modules
 
 # Installation
 
@@ -53,6 +53,24 @@ Install-AzLabLogAnalyticsWorkspace
 Connect-VMsToLogAnalytics -VMNames $vmname
 ```
 
+#### Connect Log Analytics to Sentinel
+```bash
+Connect-AzLogAnalyticsToSentinel
+```
+
+#### Create alert rules 
+
+This step depends on what you have implemented in your workspace. For example, let's assume "Sysmon" refers to a simple Kusto function:
+```bash
+Event | where Source == "Microsoft-Windows-Sysmon"
+```
+
+We can then use this to create a Sysmon rule to detect signs of credential dumping:
+```bash
+New-AzSentinelScheduledAlertRule -Severity "High" -DisplayName "T1059.001-1 (Mimikatz)" `
+    -Query "Sysmon | where EventID == 10 and TargetImage endswith 'lsass.exe'"
+```
+
 # Usage
 
 The [Invoke-AtomicRedTeam](https://github.com/redcanaryco/invoke-atomicredteam) testing framework is used to initiate hostile network activity on a remote host whose logs are being monitored. After launching an attack, the idea is to look for traces of the attack within system event logs, with the help of Azure Sentinel and Log Analytics.
@@ -79,16 +97,16 @@ Set-MpPreference -DisableRealtimeMonitoring $true
 Import-Module "C:\AtomicRedTeam\invoke-atomicredteam\Invoke-AtomicRedTeam.psd1" -Force
 ```
 
-After identifying a threat technique that you want to investigate, such as [credential dumping](https://attack.mitre.org/techniques/T1003/), download any prerequisite files before running the test suite.
+After identifying a threat technique that you want to investigate, such as [PowerShell scripting](https://attack.mitre.org/techniques/T1059/001/), download any prerequisite files before running the test suite.
 
 #### Download supporting files
 ```bash
-Invoke-AtomicTest T1003 -GetPrereqs
+Invoke-AtomicTest T1059.001 -GetPrereqs
 ```
 
-#### Fire in the hole!
+#### Trigger Mimikatz
 ```bash
-Invoke-AtomicTest T1003
+Invoke-AtomicTest T1059.001 -TestNumbers 1
 ```
 
-*To be continued...*
+If all has gone well, Azure Sentinel will eventually detect the attack and generate an alert.

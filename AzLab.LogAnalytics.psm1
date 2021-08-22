@@ -65,7 +65,7 @@ function Install-AzLabLogAnalyticsWorkspace {
             $idx++
         }
         
-        Write-Information "Log analytics workspace created." -InformationAction Continue
+        Write-Information "Log analytics workspace created." -InformationAction "Continue"
     }
 }
 
@@ -157,7 +157,7 @@ function Connect-AzLogAnalyticsToSentinel {
             New-AzMonitorLogAnalyticsSolution -Type "SecurityInsights" `
                 -ResourceGroupName $ResourceGroupName -Location $Location `
                 -WorkspaceResourceId $ws.ResourceId | Out-Null
-            Write-Information "Sentinel connected to Log Analytics." -InformationAction Continue
+            Write-Information "Sentinel connected to Log Analytics." -InformationAction "Continue"
         }
     }
 }
@@ -203,13 +203,13 @@ function New-AzSentinelScheduledAlertRule {
     )
     
     process {
-        $rule = New-AzSentinelAlertRule -ResourceGroupName $AzGlobals.ResourceGroup `
-            -WorkspaceName $AzGlobals.LogWorkspace -Scheduled -Enabled `
+        $rule = New-AzSentinelAlertRule -ResourceGroupName $ResourceGroupName `
+            -WorkspaceName $LogWorkspaceName -Scheduled -Enabled `
             -DisplayName $DisplayName -Query $Query `
             -Severity $Severity -TriggerThreshold $TriggerThreshold `
             -QueryFrequency (New-TimeSpan -Minutes $QueryFrequencyMins) `
             -QueryPeriod (New-TimeSpan -Minutes $QueryPeriodMins)
 
-        Write-Information "Rule $($rule.DisplayName) created." -InformationAction Continue
+        Write-Information "Rule $($rule.DisplayName) created." -InformationAction "Continue"
     }
 }

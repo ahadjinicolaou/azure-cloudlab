@@ -48,7 +48,7 @@ function Install-AzLabRemoteAccessVNet {
         $VNet = New-AzVirtualNetwork `
             -Name $VNetName -ResourceGroupName $ResourceGroupName -Location $Location `
             -AddressPrefix $AzGlobals.VNetSubnet -Subnet $cfg
-        Write-Information "Virtual network $VNetName created." -InformationAction Continue
+        Write-Information "Virtual network $VNetName created." -InformationAction "Continue"
 
         # make sure all subnets exist
         foreach ($SubnetName in @("linux-subnet", "windows-subnet")) {
@@ -68,7 +68,7 @@ function Install-AzLabRemoteAccessVNet {
                 $VNet | Set-AzVirtualNetwork | Out-Null
             }
             
-            Write-Information "Virtual subnet $SubnetName created." -InformationAction Continue
+            Write-Information "Virtual subnet $SubnetName created." -InformationAction "Continue"
         }
     }
 }
@@ -283,7 +283,7 @@ function Remove-AzLabVM {
                     [array]::IndexOf($res.Name, "$VMName-disk")
                 )
 
-                # remove each resource (if found)
+                # remove each resource if found
                 foreach ($idx in $indices) {
                     if ($idx -ge 0) {
                         Remove-AzResource -ResourceId $res[$idx].Id -Force | Out-Null
