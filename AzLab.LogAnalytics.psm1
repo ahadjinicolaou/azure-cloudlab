@@ -133,3 +133,83 @@ function Connect-AzLabVMsToLogAnalytics {
         }
     }
 }
+
+function Connect-AzLogAnalyticsToSentinel {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceGroupName = $AzGlobals.ResourceGroup,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $Location = $AzGlobals.Location,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $LogWorkspaceName = $AzGlobals.LogWorkspace
+    )
+    
+    process {
+        $ws = Get-AzOperationalInsightsWorkspace -ResourceGroupName $ResourceGroupName `
+            -Name $LogWorkspaceName -ErrorAction "Stop"
+        if ($ws) {
+            New-AzMonitorLogAnalyticsSolution -Type "SecurityInsights" `
+                -ResourceGroupName $ResourceGroupName -Location $Location `
+                -WorkspaceResourceId $ws.ResourceId | Out-Null
+            Write-Information "Sentinel connected to Log Analytics." -InformationAction Continue
+        }
+    }
+}
+
+function New-AzSentinelScheduledAlertRule {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceGroupName = $AzGlobals.ResourceGroup,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $Location = $AzGlobals.Location,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $LogWorkspaceName = $AzGlobals.LogWorkspace,
+
+        [Parameter(Mandatory)]
+        [ValidateSet("Informational", "Low", "Medium", "High")]
+        [string] $Severity,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [int] $QueryFrequencyMins = 10,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [int] $QueryPeriodMins = 10,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [int] $TriggerThreshold = 0,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $Query,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DisplayName
+    )
+    
+    process {
+        $rule = New-AzSentinelAlertRule -ResourceGroupName $AzGlobals.ResourceGroup `
+            -WorkspaceName $AzGlobals.LogWorkspace -Scheduled -Enabled `
+            -DisplayName $DisplayName -Query $Query `
+            -Severity $Severity -TriggerThreshold $TriggerThreshold `
+            -QueryFrequency (New-TimeSpan -Minutes $QueryFrequencyMins) `
+            -QueryPeriod (New-TimeSpan -Minutes $QueryPeriodMins)
+
+        Write-Information "Rule $($rule.DisplayName) created." -InformationAction Continue
+    }
+}

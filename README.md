@@ -38,14 +38,14 @@ New-AzLabVM -OperatingSystem "WindowsServer" -VMNames $vmname `
     -Credential $cred -CertPassword $cred.Password 
 ```
 
-#### Install Sysmon and AtomicRedTeam
+#### Install prerequisite applications
 ```bash
 Install-AzLabApps -VMNames $vmname -InstallSysmon -InstallAtomicRedTeam
 ```
 
 #### Install the Log Analytics workspace
 ```bash
-Install-AzLabRemoteAccessVNet
+Install-AzLabLogAnalyticsWorkspace
 ```
 
 #### Connect the VM to the workspace

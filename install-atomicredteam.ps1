@@ -6,6 +6,7 @@ if ($exists) {
 }
 
 # install NuGet package provider
+# this is done separately to avoid waiting for a prompt later
 Find-PackageProvider -Name "NuGet" -ForceBootstrap -IncludeDependencies
 
 # install ART
